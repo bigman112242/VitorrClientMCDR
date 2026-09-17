@@ -1,154 +1,158 @@
 <!DOCTYPE html>
-<html manifest="offline.appcache">
-<head>
-    <meta charset="UTF-8" />
-	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
-	<title>Bendy Time Simulator (Bendy Fight)</title>
-	<meta name="description" content="Hey Henry, do you wanna have a Bad Time." />
-	
-	<!-- Standardised web app manifest -->
-	<link rel="manifest" href="appmanifest.json" />
-	
-	<!-- Allow fullscreen mode on iOS devices. (These are Apple specific meta tags.) -->
-	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, minimal-ui" />
-	<meta name="apple-mobile-web-app-capable" content="yes" />
-	<meta name="apple-mobile-web-app-status-bar-style" content="black" />
-	<link rel="apple-touch-icon" sizes="289x289" href="icon-34.png" />
-	<meta name="HandheldFriendly" content="true" />
-	
-	<!-- Chrome for Android web app tags -->
-	<meta name="mobile-web-app-capable" content="yes" />
-	<link rel="shortcut icon" sizes="289x289" href="icon-34.png" />
-
-    <!-- All margins and padding must be zero for the canvas to fill the screen. -->
-	<style type="text/css">
-		* {
-			padding: 0;
-			margin: 0;
-		}
-		html, body {
-			background: #000;
-			color: #fff;
-			overflow: hidden;
-			touch-action: none;
-			-ms-touch-action: none;
-		}
-		canvas {
-			touch-action-delay: none;
-			touch-action: none;
-			-ms-touch-action: none;
-		}
-    </style>
-	
-
-</head> 
- 
-<body> 
-	<div id="fb-root"></div>
-	
-	<script>
-	// Issue a warning if trying to preview an exported project on disk.
-	(function(){
-		// Check for running exported on file protocol
-		if (window.location.protocol.substr(0, 4) === "file")
-		{
-			alert("Exported games won't work until you upload them. (When running on the file:/// protocol, browsers block many features from working for security reasons.)");
-		}
-	})();
-	</script>
-	
-	<!-- The canvas must be inside a div called c2canvasdiv -->
-	<div id="c2canvasdiv">
-	
-		<!-- The canvas the project will render to.  If you change its ID, don't forget to change the
-		ID the runtime looks for in the jQuery events above (ready() and cr_sizeCanvas()). -->
-		<canvas id="c2canvas" width="640" height="480">
-			<!-- This text is displayed if the visitor's browser does not support HTML5.
-			You can change it, but it is a good idea to link to a description of a browser
-			and provide some links to download some popular HTML5-compatible browsers. -->
-			<h1>Your browser does not appear to support HTML5.  Try upgrading your browser to the latest version.  <a href="http://www.whatbrowser.org">What is a browser?</a>
-			<br/><br/><a href="http://www.microsoft.com/windows/internet-explorer/default.aspx">Microsoft Internet Explorer</a><br/>
-			<a href="http://www.mozilla.com/firefox/">Mozilla Firefox</a><br/>
-			<a href="http://www.google.com/chrome/">Google Chrome</a><br/>
-			<a href="http://www.apple.com/safari/download/">Apple Safari</a></h1>
-		</canvas>
-		
-	</div>
-	
-	<!-- Pages load faster with scripts at the bottom -->
-	
-	<!-- Construct 2 exported games require jQuery. -->
-	<script src="jquery-2.1.1.min.js"></script>
-
-
-	
-    <!-- The runtime script.  You can rename it, but don't forget to rename the reference here as well.
-    This file will have been minified and obfuscated if you enabled "Minify script" during export. -->
-	<script src="c2runtime.js"></script>
-
-    <script>
-		// Start the Construct 2 project running on window load.
-		jQuery(document).ready(function ()
-		{			
-			// Create new runtime using the c2canvas
-			cr_createRuntime("c2canvas");
-		});
-		
-		// Pause and resume on page becoming visible/invisible
-		function onVisibilityChanged() {
-			if (document.hidden || document.mozHidden || document.webkitHidden || document.msHidden)
-				cr_setSuspended(true);
-			else
-				cr_setSuspended(false);
-		};
-		
-		document.addEventListener("visibilitychange", onVisibilityChanged, false);
-		document.addEventListener("mozvisibilitychange", onVisibilityChanged, false);
-		document.addEventListener("webkitvisibilitychange", onVisibilityChanged, false);
-		document.addEventListener("msvisibilitychange", onVisibilityChanged, false);
-		
-		function OnRegisterSWError(e)
-		{
-			console.warn("Failed to register service worker: ", e);
-		};
-		
-		// Runtime calls this global method when ready to start caching (i.e. after startup).
-		// This registers the service worker which caches resources for offline support.
-		window.C2_RegisterSW = function C2_RegisterSW()
-		{
-			if (!navigator.serviceWorker)
-				return;		// no SW support, ignore call
-			
-			try {
-				navigator.serviceWorker.register("sw.js", { scope: "./" })
-				.then(function (reg)
-				{
-					console.log("Registered service worker on " + reg.scope);
-				})
-				.catch(OnRegisterSWError);
-			}
-			catch (e)
-			{
-				OnRegisterSWError(e);
-			}
-		};
-    </script>
-	<script>
-		(function (i, s, o, g, r, a, m) {
-			i['GoogleAnalyticsObject'] = r;
-			i[r] = i[r] || function () {
-				(i[r].q = i[r].q || []).push(arguments)
-			},
-			i[r].l = 1 * new Date();
-			a = s.createElement(o),
-			m = s.getElementsByTagName(o)[0];
-			a.async = 1;
-			a.src = g;
-			m.parentNode.insertBefore(a, m)
-		})(window, document, 'script', 'https://www.google-analytics.com/analytics.js', 'ga');
-
-		ga('create', 'UA-78361109-1', 'auto');
-		ga('send', 'pageview');
-	</script>
-</body> 
-</html> 
+<html><head><meta charset="utf-8"><meta name="viewport"content="width=device-width,initial-scale=1">
+<title>3D Crystal PvP Trainer</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>body{margin:0;background:#000;color:#fff;font-family:Arial;overflow:hidden}#c{width:100vw;height:100vh;display:block}#cross{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);font-size:22px;pointer-events:none}#hot{position:fixed;bottom:8px;left:50%;transform:translateX(-50%);display:flex;gap:4px}#slot{width:70px;height:56px;background:#222a;border:2px solid #555;text-align:center;font-size:11px;border-radius:6px}#slot.sel{border-color:#0ff;background:#334}#off{position:fixed;bottom:8px;left:calc(50% - 300px);width:70px;height:56px;background:#222a;border:2px solid gold;text-align:center;font-size:11px;border-radius:6px}#hpw{position:fixed;bottom:70px;left:50%;transform:translateX(-50%);width:400px;height:16px;background:#333;border-radius:8px}#hpb{height:100%;width:100%;background:linear-gradient(90deg,#0f0,#8f0);border-radius:8px}#menu,#inv{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);background:#15151f;padding:16px;border-radius:12px;border:1px solid #555;width:380px;z-index:10}button,input,select{background:#2a2a3a;color:#fff;border:1px solid #666;border-radius:6px;padding:6px;margin:3px}#feed{position:fixed;top:8px;left:8px;font-size:13px;max-width:320px}</style></head>
+<body>
+<canvas id="c"></canvas><div id="cross">+</div><div id="feed"></div>
+<div id="hpw"><div id="hpb"></div></div><div id="hot"></div><div id="off">OFFHAND<br>[F]<br><span id="offt">empty</span></div>
+<div id="menu"><h3>3D Crystal PvP Trainer</h3>
+Name <input id="nm" value="You" style="width:90px"><br>
+Armor <select id="arm"><option value="iron">Iron 30%</option><option value="diamond" selected>Diamond 50%</option><option value="netherite">Netherite 60%</option></select><br>
+Bots <select id="bc"><option>1</option><option selected>2</option><option>3</option></select>
+Diff <select id="df"><option value="easy">Easy</option><option value="medium" selected>Medium</option><option value="hard">Hard</option></select><br>
+Totems (max 20) <input id="tc" type="number" value="5" min="0" max="20" style="width:60px"><br>
+<button onclick="startGame()">PLAY - click canvas to lock mouse after</button><br><small>WASD move Space jump | LMB hit/break/detonate | RMB place | 1-9 hotbar | F offhand | E inventory<br>1 Pick 2 Obby 3 Crystal 4 Anchor 5 Glow 6 Sword 7 Gapple 8 Totem 9 Torch</small></div>
+<div id="inv" style="display:none"><h3>Inventory [E to close]</h3><div id="invlist"></div>
+Armor <select id="arm2"><option value="iron">Iron</option><option value="diamond">Diamond</option><option value="netherite">Netherite</option></select><br>
+<button onclick="swapOff()">Put / Remove Totem Offhand (F)</button> <button onclick="toggleInv(false)">Close</button><br><small>You MUST have totem in OFFHAND to pop. Totems in bag do nothing.</small></div>
+<script>
+const R=10,DEPTH=5;
+let scene,camera,renderer,yaw=0,pitch=0,keys={},playing=false,players=[],pending=[],visFx=[];
+let groundSet=new Set(),placed=new Map(),crystals=[],obbyHits=new Map();
+let boxGeo,groundInst,bedrockMesh,dummy=new THREE.Object3D();
+let obbyMat,torchMat,anchorMats=[],groundMat,crystalGeo;
+let myIdx=0,selected=2,eatCD=0,atkCD=0;
+const AR={iron:.3,diamond:.5,netherite:.6,none:0};
+function K(x,y,z){return x+','+y+','+z}
+function beep(f,d=.15,t='square'){try{let a=new(window.AudioContext||window.webkitAudioContext)(),o=a.createOscillator(),g=a.createGain();o.type=t;o.frequency.value=f;g.gain.value=.07;o.connect(g);g.connect(a.destination);o.start();o.stop(a.currentTime+d)}catch(e){}}
+function feed(m){let f=document.getElementById('feed');f.innerHTML=m+'<br>'+f.innerHTML.slice(0,400)}
+function initThree(){
+ scene=new THREE.Scene();scene.background=new THREE.Color(0x0b0b14);scene.fog=new THREE.Fog(0x0b0b14,20,60);
+ camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,.1,200);camera.rotation.order='YXZ';
+ renderer=new THREE.WebGLRenderer({canvas:document.getElementById('c')});renderer.setSize(innerWidth,innerHeight);
+ scene.add(new THREE.AmbientLight(0xffffff,.7));let d=new THREE.DirectionalLight(0xffffff,.8);d.position.set(10,20,10);scene.add(d);
+ boxGeo=new THREE.BoxGeometry(1,1,1);crystalGeo=new THREE.OctahedronGeometry(.45);
+ groundMat=new THREE.MeshLambertMaterial({color:0x4a2b2b});obbyMat=new THREE.MeshLambertMaterial({color:0x1e1033});
+ torchMat=new THREE.MeshLambertMaterial({color:0xffd34d,emissive:0xaa7700});
+ for(let i=0;i<4;i++)anchorMats.push(new THREE.MeshLambertMaterial({color:0x555566,emissive:i==0?0x000000:0xff8800,emissiveIntensity:i*.6}));
+ bedrockMesh=new THREE.Mesh(boxGeo,new THREE.MeshLambertMaterial({color:0x222228}));bedrockMesh.scale.set(R*2+1,1,R*2+1);bedrockMesh.position.set(0,0,0);bedrockMesh.userData.kind='bedrock';scene.add(bedrockMesh);
+ groundInst=new THREE.InstancedMesh(boxGeo,groundMat,3000);groundInst.userData.kind='ground';scene.add(groundInst);
+ for(let x=-R;x<=R;x++)for(let z=-R;z<=R;z++)for(let y=1;y<=DEPTH;y++)groundSet.add(K(x,y,z));
+ rebuildGround();
+ addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+ let cv=renderer.domElement;cv.addEventListener('click',()=>{if(playing&&document.pointerLockElement!==cv)cv.requestPointerLock()});
+ document.addEventListener('mousemove',e=>{if(document.pointerLockElement===cv){yaw-=e.movementX*.0022;pitch-=e.movementY*.0022;pitch=Math.max(-1.5,Math.min(1.5,pitch))}});
+ document.addEventListener('mousedown',e=>{if(!playing||document.pointerLockElement!==cv)return;if(e.button===0)leftAct();if(e.button===2)rightAct()});
+ document.addEventListener('contextmenu',e=>e.preventDefault());
+ document.addEventListener('keydown',e=>{keys[e.code]=true;if(!playing)return;
+  if(e.code.startsWith('Digit')){let n=+e.code.slice(5);if(n>=1&&n<=9){selected=n;updHot()}}
+  if(e.code==='KeyF)swapOff();if(e.code==='KeyF')swapOff();if(e.code==='KeyE')toggleInv(document.getElementById('inv').style.display==='none')});
+ // fix above double typo: ensure F works
+ document.addEventListener('keyup',e=>{keys[e.code]=false});
+}
+function rebuildGround(){let i=0;for(let k of groundSet){let[a,b,c]=k.split(',').map(Number);dummy.position.set(a,b,c);dummy.updateMatrix();groundInst.setMatrixAt(i++,dummy.matrix)}groundInst.count=i;groundInst.instanceMatrix.needsUpdate=true}
+function solidAt(bx,by,bz){
+ if(by<=0)return true;if(bx<-R||bx>R||bz<-R||bz>R)return true;
+ if(placed.has(K(bx,by,bz)))return true;
+ if(by>=1&&by<=DEPTH&&groundSet.has(K(bx,by,bz)))return true;
+ return false}
+function worldSolid(x,y,z){return solidAt(Math.round(x),Math.round(y),Math.round(z))}
+function collides(px,py,pz){let hw=.3;for(let dx of[-hw,hw])for(let dz of[-hw,hw])for(let dy of[.1,.9,1.7])if(worldSolid(px+dx,py+dy,pz+dz))return true;return false}
+function moveP(p,dx,dy,dz){
+ if(!collides(p.pos.x+dx,p.pos.y,p.pos.z))p.pos.x+=dx;
+ if(!collides(p.pos.x,p.pos.y,p.pos.z+dz))p.pos.z+=dz;
+ let ny=p.pos.y+dy;if(!collides(p.pos.x,ny,p.pos.z)){p.pos.y=ny;p.onGround=false}else{if(dy<0)p.onGround=true;p.vy=0}
+ p.pos.x=Math.max(-R+.5,Math.min(R-.5,p.pos.x));p.pos.z=Math.max(-R+.5,Math.min(R-.5,p.pos.z));
+ if(p.pos.y<.6){p.pos.y=.6;p.vy=0;p.onGround=true}}
+function mkMesh(c){let g=new THREE.Group();let b=new THREE.Mesh(boxGeo,new THREE.MeshLambertMaterial({color:c}));b.position.y=.9;b.userData.kind='player';let h=new THREE.Mesh(boxGeo,new THREE.MeshLambertMaterial({color:0xffcc99}));h.scale.set(.6,.5,.6);h.position.y=1.65;h.userData.kind='player';g.add(b);g.add(h);g.userData.kind='player';scene.add(g);return g}
+function startGame(){
+ initThreeOnce();groundSet.clear();placed.forEach(v=>scene.remove(v.mesh));placed.clear();crystals.forEach(c=>scene.remove(c.mesh));crystals=[];pending=[];obbyHits.clear();
+ for(let x=-R;x<=R;x++)for(let z=-R;z<=R;z++)for(let y=1;y<=DEPTH;y++)groundSet.add(K(x,y,z));rebuildGround();
+ let arm=document.getElementById('arm').value,tn=Math.min(20,parseInt(document.getElementById('tc').value)||0);
+ document.getElementById('arm2').value=arm;players=[];
+ let me={isBot:false,name:document.getElementById('nm').value||'You',color:0x00ff88,pos:{x:-4,y:DEPTH+1.5,z:0,},vy:0,onGround:false,hp:100,armor:arm,obby:64,crys:16,anch:6,glow:14,gap:8,bag:tn,off:0,alive:true,resp:0,kills:0,god:0,mesh:null};me.pos=new THREE.Vector3(-4,DEPTH+1.5,0);me.mesh=mkMesh(0x00ff88);me.mesh.visible=false;players.push(me);
+ let bc=parseInt(document.getElementById('bc').value),df=document.getElementById('df').value;
+ let cols=[0xff5555,0x5555ff,0xff00ff];
+ for(let i=0;i<bc;i++){let b={isBot:true,name:'Bot'+(i+1),pos:new THREE.Vector3(4+i*2,DEPTH+1.5,i*2-2),vy:0,onGround:false,hp:100,armor:'netherite',obby:999,crys:999,anch:999,glow:999,gap:5,bag:0,off:1,tot:3,alive:true,resp:0,kills:0,god:0,mesh:mkMesh(cols[i%3]),aiT:Math.random(),plcCD:0,atkCD:0,seed:Math.random()*10,diff:df};players.push(b)}
+ document.getElementById('menu').style.display='none';playing=true;selected=2;updHot();updHP();feed('Game started - press F to put totem in offhand!');animate();
+}
+let inited=false;function initThreeOnce(){if(!inited){initThree();inited=true}}
+function swapOff(){let p=players[myIdx];if(!p||!p.alive)return;if(p.off===0&&p.bag>0){p.bag--;p.off=1;beep(600,.1)}else if(p.off===1&&p.bag<20){p.off=0;p.bag++;beep(400,.1)}updHot()}
+function toggleInv(s){document.getElementById('inv').style.display=s?'block':'none';if(s){document.exitPointerLock();let p=players[myIdx];document.getElementById('invlist').innerHTML=`Obby:${p.obby} Crys:${p.crys} Anch:${p.anch} Glow:${p.glow} Gapple:${p.gap} TotemBag:${p.bag}/20 Offhand:${p.off?'YES':'NO'}`}}
+function updHot(){let p=players[myIdx];if(!p)return;let names=['','⛏️Pick ∞','🟪Obby ','💎Crys ','⚓Anch ','✨Glow ','🗡️Sword','🍎Gap ','🟡Tot ','🔥Torch ∞'];let counts=['', '',''+p.obby,''+p.crys,''+p.anch,''+p.glow,'',''+p.gap,''+p.bag,''];let h='';for(let i=1;i<=9;i++)h+=`<div id="slot" class="${selected===i?'sel':''}">${names[i]}${counts[i]}<br>${i}</div>`;document.getElementById('hot').innerHTML=h;document.getElementById('offt').innerText=p.off?'TOTEM ✔':'empty'}
+function updHP(){let p=players[myIdx];if(!p)return;document.getElementById('hpb').style.width=Math.max(0,p.hp)+'%'}
+function rayAim(){let rc=new THREE.Raycaster();rc.setFromCamera({x:0,y:0},camera);rc.far=8;let objs=[groundInst,bedrockMesh];placed.forEach(v=>objs.push(v.mesh));crystals.forEach(c=>objs.push(c.mesh));players.forEach((pl,i)=>{if(i!==myIdx&&pl.alive)objs.push(pl.mesh)});let h=rc.intersectObjects(objs,true);if(!h.length)return null;let it=h[0];let o=it.object;let kind=o.userData.kind||(o.parent&&o.parent.userData.kind);return{obj:o,kind:kind||'ground',point:it.point,normal:it.face?it.face.normal.clone():new THREE.Vector3(0,1,0),dist:it.distance}}
+function placeBlock(bx,by,bz,type,owner){let k=K(bx,by,bz);if(solidAt(bx,by,bz)||by<1||by>DEPTH+3)return false;let m;if(type==='obby')m=new THREE.Mesh(boxGeo,obbyMat);else if(type==='torch')m=new THREE.Mesh(boxGeo,torchMat);else{m=new THREE.Mesh(boxGeo,anchorMats[0])}m.position.set(bx,by,bz);m.userData={kind:type,bx,by,bz};scene.add(m);placed.set(k,{type,charge:0,mesh:m});return true}
+function placeCrystal(sx,sy,sz,owner){let cx=sx,cy=sy+1,cz=sz;if(solidAt(cx,cy,cz))return false;for(let c of crystals)if(c.bx===cx&&c.by===cy&&c.bz===cz)return false;let m=new THREE.Mesh(crystalGeo,new THREE.MeshLambertMaterial({color:0x22eaff,emissive:0x0088aa}));m.position.set(cx,cy+.3,cz);m.userData={kind:'crystal',bx:cx,by:cy,bz:cz};scene.add(m);crystals.push({bx:cx,by:cy,bz:cz,mesh:m});return true}
+function leftAct(){let p=players[myIdx];if(atkCD>0||!p.alive)return;atkCD=.25;let a=rayAim();
+ if(a&&a.kind==='crystal'&&a.dist<6){let d=a.obj.userData;removeCrys(d.bx,d.by,d.bz);explode(a.obj.position.x,a.obj.position.y,a.obj.position.z,4.5,60,p,'crystal');return}
+ if(a&&(a.kind==='anchor')&&a.dist<6){let d=a.obj.userData;let e=placed.get(K(d.bx,d.by,d.bz));if(e&&e.charge>0){let lvl=e.charge;scene.remove(e.mesh);placed.delete(K(d.bx,d.by,d.bz));explode(d.bx,d.by,d.bz,6.5+lvl*.7,75+lvl*12,p,'anchor');return}}
+ if(a&&a.kind==='player'&&a.dist<3.8){let b=nearestBot(a.point);if(b){hurt(b,selected===6?10:selected===1?4:5,p);beep(300,.08);return}}
+ if(selected===1){if(!a||a.dist>6)return;let hb=a.point.clone().addScaledVector(a.normal,-.3);let bx=Math.round(hb.x),by=Math.round(hb.y),bz=Math.round(hb.z);let k=K(bx,by,bz);
+  if(placed.has(k)){let e=placed.get(k);if(e.type==='obby'){let h=(obbyHits.get(k)||0)+1;if(h>=3){scene.remove(e.mesh);placed.delete(k);obbyHits.delete(k)}else{obbyHits.set(k,h);beep(200,.05)}}else if(e.type==='torch'){scene.remove(e.mesh);placed.delete(k)}else if(e.type==='anchor'&&e.charge===0){scene.remove(e.mesh);placed.delete(k)}return}
+  if(groundSet.has(k)&&by>0){groundSet.delete(k);rebuildGround();beep(200,.05)}return}
+ if(selected===6){let b=nearestBot(p.pos,3.8);if(b){hurt(b,10,p);beep(350,.07)}return}
+ // punch crystal near
+ let nc=nearestCrys(p.pos,6);if(nc&&a&&nc.mesh.position.distanceTo(a.point)<2.5){removeCrys(nc.bx,nc.by,nc.bz);explode(nc.mesh.position.x,nc.mesh.position.y,nc.mesh.position.z,4.5,60,p,'crystal')}
+}
+function rightAct(){let p=players[myIdx];if(!p.alive)return;let a=rayAim();if(selected===7){eat(p);return}if(selected===8){feed('Press F to move totem to OFFHAND');return}if(!a||a.dist>6.5)return;
+ let tp=a.point.clone().addScaledVector(a.normal,.6);let bx=Math.round(tp.x),by=Math.round(tp.y),bz=Math.round(tp.z);
+ if(selected===2){if(p.obby<=0)return;if(placeBlock(bx,by,bz,'obby',p)){p.obby--;beep(500,.06);updHot()}}
+ else if(selected===4){if(p.anch<=0)return;if(placeBlock(bx,by,bz,'anchor',p)){p.anch--;beep(450,.06);updHot()}}
+ else if(selected===9){if(placeBlock(bx,by,bz,'torch',p))beep(500,.05)}
+ else if(selected===3){let hb=a.point.clone().addScaledVector(a.normal,-.3);let sx=Math.round(hb.x),sy=Math.round(hb.y),sz=Math.round(hb.z);let sup=placed.get(K(sx,sy,sz));let isBed=sy===0;if((sup&&sup.type==='obby')||isBed){if(p.crys<=0)return;if(placeCrystal(sx,sy,sz,p)){p.crys--;beep(700,.06);updHot()}}else feed('Crystal needs obsidian below')}
+ else if(selected===5){if(!a||a.kind!=='anchor')return;let d=a.obj.userData;let e=placed.get(K(d.bx,d.by,d.bz));if(e&&e.charge<3&&p.glow>0){e.charge++;p.glow--;e.mesh.material=anchorMats[e.charge];beep(500+e.charge*150,.08);updHot()}}
+}
+function nearestBot(pos,mx=99){let best=null,bd=mx;for(let i=1;i<players.length;i++){let b=players[i];if(!b.alive)continue;let d=Math.hypot(b.pos.x-pos.x,b.pos.z-pos.z+(pos.y!==undefined?0:0));let d3=b.pos.distanceTo(pos instanceof THREE.Vector3?pos:new THREE.Vector3(pos.x,pos.y||b.pos.y,pos.z));if(d3<bd){bd=d3;best=b}}return best}
+function nearestCrys(pos,mx){let best=null,bd=mx;for(let c of crystals){let d=c.mesh.position.distanceTo(new THREE.Vector3(pos.x,pos.y+1.5||pos.y,pos.z));if(d<bd){bd=d;best=c}}return best}
+function removeCrys(bx,by,bz){let i=crystals.findIndex(c=>c.bx===bx&&c.by===by&&c.bz===bz);if(i>=0){scene.remove(crystals[i].mesh);crystals.splice(i,1)}}
+function eat(p){if(p.gap<=0||p.hp>=100||eatCD>0)return;eatCD=1.5;p.gap--;p.hp=Math.min(100,p.hp+30);beep(600,.15,'sine');if(!p.isBot){updHot();updHP()}}
+function hurt(t,dmg,atk){if(!t.alive||t.god>0||!playing)return;dmg*=(1-(AR[t.armor]||0));dmg=Math.max(1,Math.round(dmg));t.hp-=dmg;if(t===players[myIdx]){updHP();document.body.style.background='#330000';setTimeout(()=>document.body.style.background='#000',80)}
+ if(t.hp<=0){if(!t.isBot){if(t.off===1){t.off=0;t.hp=40;t.god=1.5;feed('✦ TOTEM POP!');beep(880,.4);updHot();updHP();return}}else{if(t.tot>0){t.tot--;t.hp=50;t.god=1.5;feed(t.name+' popped totem');return}}
+  t.hp=0;t.alive=false;t.resp=3;if(atk)atk.kills++;feed((atk?atk.name:'???')+' 💀 '+t.name);beep(150,.4,'sawtooth')}}
+function explode(x,y,z,rad,base,owner,kind){
+ beep(kind==='anchor'?80:120,.35,'sawtooth');
+ let g=new THREE.Mesh(new THREE.SphereGeometry(1,12,12),new THREE.MeshBasicMaterial({color:kind==='anchor'?0xff8800:0x66eeff,transparent:true,opacity:.8}));g.position.set(x,y,z);scene.add(g);visFx.push({m:g,t:0,rad});
+ for(let bx=Math.round(x-rad);bx<=Math.round(x+rad);bx++)for(let by=1;by<=DEPTH;by++)for(let bz=Math.round(z-rad);bz<=Math.round(z+rad);bz++){let d=Math.hypot(bx-x,by-y,bz-z);if(d<rad){let k=K(bx,by,bz);if(groundSet.has(k)&&Math.random()<(kind==='anchor'?.95:.85))groundSet.delete(k)}}
+ let todel=[];placed.forEach((v,k)=>{let d=v.mesh.position.distanceTo(new THREE.Vector3(x,y,z));if(d<rad){if(v.type==='torch')todel.push(k);if(v.type==='anchor'&&kind==='anchor')todel.push(k)}});todel.forEach(k=>{scene.remove(placed.get(k).mesh);placed.delete(k)});
+ let chain=crystals.filter(c=>c.mesh.position.distanceTo(new THREE.Vector3(x,y,z))<rad);chain.forEach(c=>removeCrys(c.bx,c.by,c.bz));
+ rebuildGround();
+ for(let pl of players){if(!pl.alive)continue;let cx=pl.pos.x,cy=pl.pos.y+1,cz=pl.pos.z;let d=Math.hypot(cx-x,cy-y,cz-z);if(d<rad+1.5){let blk=0;for(let i=1;i<6;i++){let lx=x+(cx-x)*i/6,ly=y+(cy-y)*i/6,lz=z+(cz-z)*i/6;if(worldSolid(lx,ly,lz))blk++}let prot=Math.pow(.72,blk);let fall=1-d/(rad+1.5);hurt(pl,(base*fall+4)*prot,owner);let kx=(cx-x)/(d+1)*2,kz=(cz-z)/(d+1)*2;if(!collides(pl.pos.x+kx,pl.pos.y,pl.pos.z+kz)){pl.pos.x+=kx*.3;pl.pos.z+=kz*.3}}}
+ chain.forEach((c,i)=>pending.push({x:c.mesh.position.x,y:c.mesh.position.y,z:c.mesh.position.z,t:.15+i*.12,owner,kind:'crystal'}));
+}
+function botPlaceCrystal(b,e){let etx=Math.round(e.pos.x),ety=Math.round(e.pos.y),etz=Math.round(e.pos.z);let dirs=[[1,0],[-1,0],[0,1],[0,-1]];for(let[ox,oz]of dirs){let tx=etx+ox,tz=etz+oz,ty=ety;if(solidAt(tx,ty,tz)||solidAt(tx,ty+1,tz))continue;if(!solidAt(tx,ty-1,tz))continue;if(Math.hypot(b.pos.x-tx,b.pos.z-tz)>7)continue;placeBlock(tx,ty,tz,'obby',b);placeCrystal(tx,ty,tz,b);pending.push({x:tx,y:ty+1.3,z:tz,t:b.diff==='hard'?.45:.7,owner:b,kind:'crystal'});return true}return false}
+function botPlaceAnchor(b,e){let tx=Math.round(e.pos.x),ty=Math.round(e.pos.y),tz=Math.round(e.pos.z);if(solidAt(tx,ty,tz)){tx+=1}if(solidAt(tx,ty,tz)||!solidAt(tx,ty-1,tz))return false;if(!placeBlock(tx,ty,tz,'anchor',b))return false;let ee=placed.get(K(tx,ty,tz));ee.charge=3;ee.mesh.material=anchorMats[3];pending.push({x:tx,y:ty,z:tz,t:.8,owner:b,kind:'anchor',lvl:3});return true}
+function updBot(b,dt){if(!b.alive)return;let e=players[0];if(!e.alive)return;let dx=e.pos.x-b.pos.x,dz=e.pos.z-b.pos.z,dist=Math.hypot(dx,dz)||.01;let nx=dx/dist,nz=dz/dist;
+ let sp=b.diff==='easy'?3.2:b.diff==='hard'?5.2:4.3;
+ let strafe=Math.sin(performance.now()/600+b.seed)*.7;
+ let fwd=dist>3?1:dist<1.6?-1:.2;
+ let mx=nx*fwd+(-nz)*strafe*.7,mz=nz*fwd+(nx)*strafe*.7;
+ let l=Math.hypot(mx,mz)||1;mx/=l;mz/=l;
+ b.vy-=20*dt;if(collides(b.pos.x+mx*.6,b.pos.y,b.pos.z+mz*.6)&&b.onGround)b.vy=7.5;
+ moveP(b,mx*sp*dt,b.vy*dt,mz*sp*dt);
+ b.mesh.position.copy(b.pos);b.mesh.rotation.y=Math.atan2(dx,dz);
+ b.god-=dt;b.aiT-=dt;b.plcCD-=dt;b.atkCD-=dt;
+ if(b.hp<50&&b.gap>0){b.gap--;b.hp=Math.min(100,b.hp+25)}
+ if(b.aiT<=0){b.aiT=b.diff==='hard'?.35:.6;
+  if(dist<2.8&&b.atkCD<=0){hurt(e,b.diff==='hard'?11:7,b);b.atkCD=.7}
+  else if(dist<7&&b.plcCD<=0){if(dist<4&&Math.random()<.35){if(botPlaceAnchor(b,e))b.plcCD=2.5}else{if(botPlaceCrystal(b,e))b.plcCD=1.5}}}
+}
+let last=performance.now();
+function animate(){requestAnimationFrame(animate);let now=performance.now(),dt=Math.min(.05,(now-last)/1000);last=now;
+ if(!playing){renderer.render(scene,camera);return}
+ let me=players[myIdx];atkCD-=dt;eatCD-=dt;me.god-=dt;
+ if(me.alive){let f=(keys['KeyW']?1:0)-(keys['KeyS']?1:0),s=(keys['KeyD']?1:0)-(keys['KeyA']?1:0);
+  let sp=(keys['ShiftLeft']||keys['ShiftRight'])?6.8:4.8;
+  let fx=-Math.sin(yaw),fz=-Math.cos(yaw),rx=Math.cos(yaw),rz=-Math.sin(yaw);
+  let mx=fx*f+s*rx,mz=fz*f+s*rz;let ll=Math.hypot(mx,mz);if(ll>1){mx/=ll;mz/=ll}
+  me.vy-=20*dt;if(keys['Space']&&me.onGround)me.vy=7.5;
+  moveP(me,mx*sp*dt,me.vy*dt,mz*sp*dt);
+  camera.position.set(me.pos.x,me.pos.y+1.62,me.pos.z);camera.rotation.set(pitch,yaw,0);
+ }else{me.resp-=dt;if(me.resp<=0){me.alive=true;me.hp=100;me.pos.set((Math.random()-.5)*8,DEPTH+1.5,(Math.random()-.5)*8);me.vy=0;updHP()}}
+ for(let i=1;i<players.length;i++){let b=players[i];if(!b.alive){b.resp-=dt;if(b.resp<=0){b.alive=true;b.hp=100;b.pos.set(4+i*2,DEPTH+1.5,0);b.tot=Math.max(b.tot,1)}continue}updBot(b,dt)}
+ for(let i=pending.length-1;i>=0;i--){let pb=pending[i];pb.t-=dt;if(pb.t<=0){pending.splice(i,1);if(pb.kind==='crystal')explode(pb.x,pb.y,pb.z,4.5,60,pb.owner,'crystal');else{let k=null;placed.forEach((v,key)=>{if(Math.abs(v.mesh.position.x-pb.x)<.5&&Math.abs(v.mesh.position.z-pb.z)<.5)k=key});if(k){scene.remove(placed.get(k).mesh);placed.delete(k)}explode(pb.x,pb.y,pb.z,6.5+(pb.lvl||3)*.7,75+(pb.lvl||3)*12,pb.owner,'anchor')}}}
+ for(let i=visFx.length-1;i>=0;i--){let v=visFx[i];v.t+=dt;let s=1+v.t*18;v.m.scale.set(s,s,s);v.m.material.opacity=.8-v.t*2;if(v.t>.4){scene.remove(v.m);visFx.splice(i,1)}}
+ updHP();renderer.render(scene,camera);
+}
+</script></body></html>
