@@ -1,442 +1,154 @@
 <!DOCTYPE html>
-<html lang="en">
+<html manifest="offline.appcache">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>2D Crystal PvP Trainer</title>
-<script src="https://unpkg.com/peerjs@1.5.3/dist/peerjs.min.js"></script>
-<style>
-body{background:#0e0e12;color:#fff;font-family:Arial,sans-serif;margin:0;display:flex;justify-content:center}
-#wrap{width:980px;padding:10px}
-h1{margin:6px 0;font-size:22px}
-#menu{background:#1a1a22;padding:12px;border-radius:10px;margin-bottom:10px}
-button,select,input{background:#2a2a35;color:#fff;border:1px solid #555;border-radius:6px;padding:6px 10px;margin:3px}
-button:hover{background:#3d3d55;cursor:pointer}
-canvas{background:#111;border:2px solid #444;border-radius:8px;display:block;cursor:crosshair}
-#row{display:flex;gap:10px;flex-wrap:wrap}
-small{color:#aaa}
-</style>
-</head>
-<body>
-<div id="wrap">
-<h1>⛏️ 2D Crystal PvP Trainer</h1>
-<div id="menu">
-<div id="row">
-<button onclick="startBotGame()">▶ Play vs Bots</button>
-<button onclick="startLocal2P()">👥 Local 2P (same PC)</button>
-<button onclick="createLobby()">🌐 Create Lobby Code</button>
-<input id="joinCode" placeholder="CODE e.g AB12" maxlength="6" style="width:90px">
-<button onclick="joinLobby()">Join</button>
-</div>
-<div id="row">
-<label>Name: <input id="pname" value="You" style="width:80px"></label>
-<label>Armour: <select id="armorSel"><option value="iron">Iron (30%)</option><option value="diamond" selected>Diamond (50%)</option><option value="netherite">Netherite (60%)</option></select></label>
-<label>Bots: <select id="botCount"><option>1</option><option>2</option><option>3</option></select></label>
-<label>Diff: <select id="botDiff"><option value="easy">Easy</option><option value="medium" selected>Medium</option><option value="hard">Hard</option></select></label>
-<label>Totems: <select id="totemCount"><option>1</option><option selected>3</option><option>5</option></select></label>
-</div>
-<div id="lobbyInfo">Menu → Pick a mode. Hotbar: 1 Obsidian 2 Crystal 3 Anchor 4 Glowstone 5 Sword 6 Pick  |  E = Gapple</div>
-<small>Online uses lobby codes via P2P. If school blocks peerjs, use Bots or Local 2P.</small>
-</div>
-<canvas id="game" width="960" height="600"></canvas>
-<div id="feed" style="margin-top:6px;min-height:20px"></div>
-</div>
-<script>
-// ===== CONFIG =====
-const TILE=30, GW=32, GH=20, W=960, H=600;
-const cv=document.getElementById('game'), ctx=cv.getContext('2d');
-let tiles=[], charge=[], tileHP=[], crystals=[], players=[], particles=[], texts=[], kills={};
-let mode='bot', playing=false, myIndex=0, isHost=true;
-let keys={}, mouse={x:480,y:300,left:false,right:false};
-let peer=null, conn=null, lobbyCode=null, netGuestInput={ix:0,iy:0,atk:null,plc:null,sel:5,eat:false};
-let lastSnap=0, lastSend=0;
+    <meta charset="UTF-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+	<title>Bendy Time Simulator (Bendy Fight)</title>
+	<meta name="description" content="Hey Henry, do you wanna have a Bad Time." />
+	
+	<!-- Standardised web app manifest -->
+	<link rel="manifest" href="appmanifest.json" />
+	
+	<!-- Allow fullscreen mode on iOS devices. (These are Apple specific meta tags.) -->
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, minimal-ui" />
+	<meta name="apple-mobile-web-app-capable" content="yes" />
+	<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+	<link rel="apple-touch-icon" sizes="289x289" href="icon-34.png" />
+	<meta name="HandheldFriendly" content="true" />
+	
+	<!-- Chrome for Android web app tags -->
+	<meta name="mobile-web-app-capable" content="yes" />
+	<link rel="shortcut icon" sizes="289x289" href="icon-34.png" />
 
-const ARMOR_RED={iron:0.3,diamond:0.5,netherite:0.6,leather:0.1,none:0};
-function pname(i){return document.getElementById('pname').value||('P'+(i+1));}
+    <!-- All margins and padding must be zero for the canvas to fill the screen. -->
+	<style type="text/css">
+		* {
+			padding: 0;
+			margin: 0;
+		}
+		html, body {
+			background: #000;
+			color: #fff;
+			overflow: hidden;
+			touch-action: none;
+			-ms-touch-action: none;
+		}
+		canvas {
+			touch-action-delay: none;
+			touch-action: none;
+			-ms-touch-action: none;
+		}
+    </style>
+	
 
-function initMap(){
- tiles=Array.from({length:GH},()=>Array(GW).fill(0));
- charge=Array.from({length:GH},()=>Array(GW).fill(0));
- tileHP=Array.from({length:GH},()=>Array(GW).fill(0));
- for(let x=0;x<GW;x++){tiles[0][x]=2;tiles[GH-1][x]=2;}
- for(let y=0;y<GH;y++){tiles[y][0]=2;tiles[y][GW-1]=2;}
- crystals=[];particles=[];texts=[];
-}
-function makePlayer(name,color,x,y,isBot=false){
- return {name,color,x,y,hp:100,maxHp:100,armor:document.getElementById('armorSel').value,
- totems:parseInt(document.getElementById('totemCount').value),gapples:5,
- selected:1,alive:true,isBot,botLevel:'medium',atkCD:0,plcCD:0,eatCD:0,god:0,resp:0,
- ix:0,iy:0,face:0,kills:0,aiT:0,mx:0,my:0,strafe:Math.random()*6};
-}
-function w2t(x){return Math.floor(x/TILE);}
-function t2w(t){return t*TILE+TILE/2;}
-function isSolid(tx,ty){
- if(tx<0||ty<0||tx>=GW||ty>=GH) return true;
- return tiles[ty][tx]!==0;
-}
-function colliding(x,y){
- let r=10;
- return isSolid(w2t(x-r),w2t(y-r))||isSolid(w2t(x+r),w2t(y-r))||isSolid(w2t(x-r),w2t(y+r))||isSolid(w2t(x+r),w2t(y+r));
-}
-// ===== SOUND (no assets) =====
-function beep(f,d=0.15,type='square'){try{let a=new (window.AudioContext||window.webkitAudioContext)();let o=a.createOscillator();let g=a.createGain();o.type=type;o.frequency.value=f;g.gain.value=0.08;o.connect(g);g.connect(a.destination);o.start();o.stop(a.currentTime+d);}catch(e){}}
+</head> 
+ 
+<body> 
+	<div id="fb-root"></div>
+	
+	<script>
+	// Issue a warning if trying to preview an exported project on disk.
+	(function(){
+		// Check for running exported on file protocol
+		if (window.location.protocol.substr(0, 4) === "file")
+		{
+			alert("Exported games won't work until you upload them. (When running on the file:/// protocol, browsers block many features from working for security reasons.)");
+		}
+	})();
+	</script>
+	
+	<!-- The canvas must be inside a div called c2canvasdiv -->
+	<div id="c2canvasdiv">
+	
+		<!-- The canvas the project will render to.  If you change its ID, don't forget to change the
+		ID the runtime looks for in the jQuery events above (ready() and cr_sizeCanvas()). -->
+		<canvas id="c2canvas" width="640" height="480">
+			<!-- This text is displayed if the visitor's browser does not support HTML5.
+			You can change it, but it is a good idea to link to a description of a browser
+			and provide some links to download some popular HTML5-compatible browsers. -->
+			<h1>Your browser does not appear to support HTML5.  Try upgrading your browser to the latest version.  <a href="http://www.whatbrowser.org">What is a browser?</a>
+			<br/><br/><a href="http://www.microsoft.com/windows/internet-explorer/default.aspx">Microsoft Internet Explorer</a><br/>
+			<a href="http://www.mozilla.com/firefox/">Mozilla Firefox</a><br/>
+			<a href="http://www.google.com/chrome/">Google Chrome</a><br/>
+			<a href="http://www.apple.com/safari/download/">Apple Safari</a></h1>
+		</canvas>
+		
+	</div>
+	
+	<!-- Pages load faster with scripts at the bottom -->
+	
+	<!-- Construct 2 exported games require jQuery. -->
+	<script src="jquery-2.1.1.min.js"></script>
 
-// ===== DAMAGE =====
-function blockCount(x1,y1,x2,y2){
- let c=0, seen=new Set();
- for(let i=1;i<10;i++){let x=x1+(x2-x1)*i/10,y=y1+(y2-y1)*i/10;let k=w2t(x)+','+w2t(y);
-  if(!seen.has(k)){seen.add(k);let tx=w2t(x),ty=w2t(y);
-   if(tx>=0&&ty>=0&&tx<GW&&ty<GH&&tiles[ty][tx]===1) c++;}}
- return c;
-}
-function damagePlayer(t,dmg,attacker){
- if(!t.alive||t.god>0||!playing) return;
- dmg*=(1-(ARMOR_RED[t.armor]||0));
- dmg=Math.max(1,Math.round(dmg));
- t.hp-=dmg;
- addText(t.x,t.y-20,'-'+dmg,'#ff5555');
- for(let i=0;i<6;i++) spawnP(t.x,t.y,'#f00');
- if(t.hp<=0){
-  if(t.totems>0){t.totems--;t.hp=50;t.god=1.5;addText(t.x,t.y-40,'TOTEM POP!','#ff0');feed(t.name+' popped a totem!');beep(880,0.3);for(let i=0;i<20;i++)spawnP(t.x,t.y,'#ff0');}
-  else{t.hp=0;t.alive=false;t.resp=3;addText(t.x,t.y-30,'DIED','#fff');feed((attacker?attacker.name:'???')+' 💀 '+t.name);if(attacker)attacker.kills++;beep(150,0.4,'sawtooth');}
- }
-}
-function explode(x,y,radius,base,owner,type){
- beep(type==='anchor'?90:130,0.3,'sawtooth');
- for(let i=0;i<30;i++) spawnP(x,y,type==='anchor'?'#ffa500':'#0ff');
- particles.push({x,y,r:10,max:radius,t:0});
- // destroy anchors in radius (obby stays like MC)
- for(let ty=0;ty<GH;ty++)for(let tx=0;tx<GW;tx++){
-  if(tiles[ty][tx]===3){let dx=t2w(tx)-x,dy=t2w(ty)-y;if(Math.hypot(dx,dy)<radius){tiles[ty][tx]=0;charge[ty][tx]=0;}}
- }
- // chain crystals
- let chain=crystals.filter(c=>Math.hypot(t2w(c.tx)-x,t2w(c.ty)-y)<radius && Math.hypot(t2w(c.tx)-x,t2w(c.ty)-y)>5);
- crystals=crystals.filter(c=>Math.hypot(t2w(c.tx)-x,t2w(c.ty)-y)>=radius);
- for(let p of players){if(!p.alive)continue;let d=Math.hypot(p.x-x,p.y-y);if(d<radius){
-  let bc=blockCount(x,y,p.x,p.y);let exp=1-d/radius;exp*=Math.pow(0.35,bc);
-  damagePlayer(p,base*exp+2,owner);
-  let kx=(p.x-x)/(d+1)*120*(1-exp*0.5),ky=(p.y-y)/(d+1)*120*(1-exp*0.5);
-  if(!colliding(p.x+kx*0.05,p.y+ky*0.05)){p.x+=kx*0.05;p.y+=ky*0.05;}
- }}
- // delayed chain for feel
- chain.forEach((c,i)=>setTimeout(()=>{if(playing)explode(t2w(c.tx),t2w(c.ty),140,45,owner,'crystal');},120+i*100));
-}
-function spawnP(x,y,c){particles.push({x,y,vx:(Math.random()-0.5)*200,vy:(Math.random()-0.5)*200,t:0,life:0.6,c,r:3});}
-function addText(x,y,txt,c){texts.push({x,y,txt,c,t:0});}
-function feed(t){document.getElementById('feed').innerHTML=t+'<br>'+document.getElementById('feed').innerHTML.slice(0,300);}
 
-// ===== ACTIONS =====
-function attackAt(pl,wx,wy){
- if(pl.atkCD>0||!pl.alive)return;pl.atkCD=0.32;
- // anchor detonate
- for(let ty=0;ty<GH;ty++)for(let tx=0;tx<GW;tx++){
-  if(tiles[ty][tx]===3&&charge[ty][tx]>0){
-   let ax=t2w(tx),ay=t2w(ty);
-   if(Math.hypot(pl.x-ax,pl.y-ay)<95&&Math.hypot(wx-ax,wy-ay)<45){
-    let lvl=charge[ty][tx];tiles[ty][tx]=0;charge[ty][tx]=0;
-    explode(ax,ay,150+lvl*10,40+lvl*10,pl,'anchor');return;
-   }
-  }
- }
- // crystal detonate
- for(let i=0;i<crystals.length;i++){let c=crystals[i],cx=t2w(c.tx),cy=t2w(c.ty);
-  if(Math.hypot(pl.x-cx,pl.y-cy)<100&&Math.hypot(wx-cx,wy-cy)<50){
-   crystals.splice(i,1);explode(cx,cy,140,48,pl,'crystal');return;
-  }
- }
- // mine obby with pick (slot 6) else sword hit
- let tx=w2t(wx),ty=w2t(wy);
- if(tx>=0&&ty>=0&&tx<GW&&ty<GH){
-  if(tiles[ty][tx]===1&&Math.hypot(pl.x-wx,pl.y-wy)<150){
-   if(pl.selected===6){tileHP[ty][tx]++;if(tileHP[ty][tx]>=2){tiles[ty][tx]=0;tileHP[ty][tx]=0;addText(wx,wy,'break','#aaa');}return;}
-  }
- }
- // hit players
- for(let e of players){if(e===pl||!e.alive)continue;
-  if(Math.hypot(pl.x-e.x,pl.y-e.y)<75&&Math.hypot(wx-e.x,wy-e.y)<50){
-   damagePlayer(e,pl.selected===5?9:4,pl);beep(300,0.08);return;
-  }
- }
-}
-function placeAt(pl,wx,wy){
- if(pl.plcCD>0||!pl.alive)return;let tx=w2t(wx),ty=w2t(wy);
- if(tx<1||ty<1||tx>=GW-1||ty>=GH-1)return;
- if(Math.hypot(pl.x-wx,pl.y-wy)>160)return;
- let sel=pl.selected;
- if(sel===1&&tiles[ty][tx]===0){tiles[ty][tx]=1;tileHP[ty][tx]=0;pl.plcCD=0.2;}
- else if(sel===2&&(tiles[ty][tx]===1||tiles[ty][tx]===2)&&!crystals.find(c=>c.tx===tx&&c.ty===ty)){crystals.push({tx,ty});pl.plcCD=0.25;beep(600,0.06);}
- else if(sel===3&&tiles[ty][tx]===0){tiles[ty][tx]=3;charge[ty][tx]=0;pl.plcCD=0.25;}
- else if(sel===4&&tiles[ty][tx]===3&&charge[ty][tx]<3){charge[ty][tx]++;pl.plcCD=0.25;beep(500+charge[ty][tx]*100,0.08);}
-}
-function eat(pl){if(pl.eatCD<=0&&pl.gapples>0&&pl.hp<pl.maxHp&&pl.alive){pl.gapples--;pl.hp=Math.min(100,pl.hp+28);pl.eatCD=3;addText(pl.x,pl.y-25,'+28','#0f0');}}
+	
+    <!-- The runtime script.  You can rename it, but don't forget to rename the reference here as well.
+    This file will have been minified and obfuscated if you enabled "Minify script" during export. -->
+	<script src="c2runtime.js"></script>
 
-// ===== START MODES =====
-function startBotGame(){
- mode='bot';isHost=true;myIndex=0;initMap();
- let bc=parseInt(document.getElementById('botCount').value);
- let diff=document.getElementById('botDiff').value;
- players=[makePlayer(pname(0),'#00ff88',300,300,false)];
- let cols=['#ff5555','#5555ff','#ff00ff'];
- for(let i=0;i<bc;i++){let b=makePlayer('Bot-'+(i+1),cols[i%3],650+i*40,300+i*60,true);b.botLevel=diff;b.armor='netherite';b.totems=3;players.push(b);}
- playing=true;document.getElementById('lobbyInfo').innerText='Vs '+bc+' bot(s) '+diff+' | LMB hit, RMB place, 1-6 select, E gapple';
-}
-function startLocal2P(){
- mode='local';initMap();
- players=[makePlayer('P1','#00ff88',300,300,false),makePlayer('P2','#ff5555',660,300,false)];
- players[0].armor=players[1].armor='netherite';
- playing=true;document.getElementById('lobbyInfo').innerText='Local 2P: P1 WASD+F(hit) G(place) R(eat) Q(switch) | P2 Arrows+K(hit) L(place) O(eat) P(switch)';
-}
-function randCode(){let s='ABCDEFGHJKMNPQRSTUVWXYZ23456789',c='';for(let i=0;i<4;i++)c+=s[Math.floor(Math.random()*s.length)];return c;}
-function createLobby(){
- if(typeof Peer==='undefined'){alert('PeerJS blocked, use Bots');return;}
- lobbyCode=randCode();isHost=true;mode='online';myIndex=0;initMap();
- players=[makePlayer(pname(0),'#00ff88',300,300,false),makePlayer('Rival','#ff5555',660,300,false)];
- playing=true;
- peer=new Peer('mc-cpvp2d-'+lobbyCode.toLowerCase());
- peer.on('open',()=>{document.getElementById('lobbyInfo').innerText='LOBBY CODE: '+lobbyCode+' — give to friend to Join. You are HOST.';});
- peer.on('connection',c=>{conn=c;conn.on('data',d=>{if(d.type==='input')netGuestInput=d;});conn.on('open',()=>feed('Rival joined!'));});
-}
-function joinLobby(){
- if(typeof Peer==='undefined'){alert('PeerJS blocked');return;}
- let code=document.getElementById('joinCode').value.trim().toLowerCase();
- if(!code)return alert('enter code');
- mode='online';isHost=false;myIndex=1;initMap();
- players=[makePlayer('Host','#00ff88',300,300,false),makePlayer(pname(0),'#55aaff',660,300,false)];
- playing=true;
- peer=new Peer();
- peer.on('open',()=>{
-  conn=peer.connect('mc-cpvp2d-'+code);
-  conn.on('open',()=>{document.getElementById('lobbyInfo').innerText='Connected to '+code+'!';});
-  conn.on('data',d=>{if(d.type==='snap'){
-   // apply host snap
-   tiles=d.tiles;charge=d.charge;crystals=d.crystals;
-   d.ps.forEach((s,i)=>{if(players[i])Object.assign(players[i],s);});
-  }});
- });
-}
+    <script>
+		// Start the Construct 2 project running on window load.
+		jQuery(document).ready(function ()
+		{			
+			// Create new runtime using the c2canvas
+			cr_createRuntime("c2canvas");
+		});
+		
+		// Pause and resume on page becoming visible/invisible
+		function onVisibilityChanged() {
+			if (document.hidden || document.mozHidden || document.webkitHidden || document.msHidden)
+				cr_setSuspended(true);
+			else
+				cr_setSuspended(false);
+		};
+		
+		document.addEventListener("visibilitychange", onVisibilityChanged, false);
+		document.addEventListener("mozvisibilitychange", onVisibilityChanged, false);
+		document.addEventListener("webkitvisibilitychange", onVisibilityChanged, false);
+		document.addEventListener("msvisibilitychange", onVisibilityChanged, false);
+		
+		function OnRegisterSWError(e)
+		{
+			console.warn("Failed to register service worker: ", e);
+		};
+		
+		// Runtime calls this global method when ready to start caching (i.e. after startup).
+		// This registers the service worker which caches resources for offline support.
+		window.C2_RegisterSW = function C2_RegisterSW()
+		{
+			if (!navigator.serviceWorker)
+				return;		// no SW support, ignore call
+			
+			try {
+				navigator.serviceWorker.register("sw.js", { scope: "./" })
+				.then(function (reg)
+				{
+					console.log("Registered service worker on " + reg.scope);
+				})
+				.catch(OnRegisterSWError);
+			}
+			catch (e)
+			{
+				OnRegisterSWError(e);
+			}
+		};
+    </script>
+	<script>
+		(function (i, s, o, g, r, a, m) {
+			i['GoogleAnalyticsObject'] = r;
+			i[r] = i[r] || function () {
+				(i[r].q = i[r].q || []).push(arguments)
+			},
+			i[r].l = 1 * new Date();
+			a = s.createElement(o),
+			m = s.getElementsByTagName(o)[0];
+			a.async = 1;
+			a.src = g;
+			m.parentNode.insertBefore(a, m)
+		})(window, document, 'script', 'https://www.google-analytics.com/analytics.js', 'ga');
 
-// ===== INPUT =====
-window.addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;
- if(!playing)return;
- if(mode!=='local'){
-  let p=players[myIndex];if(!p)return;
-  if(e.key>='1'&&e.key<='6')p.selected=parseInt(e.key);
-  if(e.key.toLowerCase()==='e')eat(p);
- }});
-window.addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false;});
-cv.addEventListener('mousemove',e=>{let r=cv.getBoundingClientRect();mouse.x=e.clientX-r.left;mouse.y=e.clientY-r.top;});
-cv.addEventListener('mousedown',e=>{if(e.button===0){if(mode!=='local'&&playing){let p=players[myIndex];attackAt(p,mouse.x,mouse.y);} }if(e.button===2){if(mode!=='local'&&playing){let p=players[myIndex];placeAt(p,mouse.x,mouse.y);}}});
-cv.addEventListener('contextmenu',e=>e.preventDefault());
-
-// local 2p keyboard attack/place helpers
-function autoAttack(pl){
- let en=players.find(q=>q!==pl&&q.alive);if(!en)return;
- attackAt(pl,en.x,en.y);
-}
-function autoPlace(pl){
- let en=players.find(q=>q!==pl&&q.alive);if(!en||!en.alive)return;
- let etx=w2t(en.x),ety=w2t(en.y);
- let dirs=[[1,0],[-1,0],[0,1],[0,-1]];
- for(let [dx,dy] of dirs){let tx=etx+dx,ty=ety+dy;
-  if(tx>0&&ty>0&&tx<GW-1&&ty<GH-1&&tiles[ty][tx]===0&&Math.hypot(pl.x-t2w(tx),pl.y-t2w(ty))<160){pl.selected=1;placeAt(pl,t2w(tx),t2w(ty));return;}}
- for(let [dx,dy] of dirs){let tx=etx+dx,ty=ety+dy;
-  if((tiles[ty]?.[tx]===1)&&!crystals.find(c=>c.tx===tx&&c.ty===ty)){pl.selected=2;placeAt(pl,t2w(tx),t2w(ty));return;}}
- // anchor fallback
- if(tiles[ety]?.[etx]===0){pl.selected=3;placeAt(pl,t2w(etx),t2w(ety));}
-}
-
-// ===== BOT AI =====
-function updateBot(b,dt){
- b.aiT-=dt;
- let en=players.filter(p=>p!==b&&p.alive).sort((a,c)=>Math.hypot(a.x-b.x,a.y-b.y)-Math.hypot(c.x-b.x,c.y-b.y))[0];
- if(!en){b.ix=0;b.iy=0;return;}
- let dx=en.x-b.x,dy=en.y-b.y,dist=Math.hypot(dx,dy)||1;
- let speedMul=b.botLevel==='easy'?0.8:b.botLevel==='hard'?1.15:1.0;
- if(b.hp<40&&b.gapples>0&&b.eatCD<=0){eat(b);}
- if(b.aiT<=0){
-  b.aiT=b.botLevel==='hard'?0.18:b.botLevel==='easy'?0.45:0.3;
-  // movement decision
-  let wantDist=110;
-  let nx=dx/dist, ny=dy/dist;
-  b.strafe+=dt*3;
-  let strafeDir=(Math.sin(b.strafe)>0?1:-1);
-  if(dist>220){b.mx=nx;b.my=ny;}
-  else if(dist<70){b.mx=-nx;b.my=-ny;}
-  else{b.mx=nx*0.3 + -ny*strafeDir*0.8; b.my=ny*0.3 + nx*strafeDir*0.8;}
-  // crystal combo
-  let etx=w2t(en.x),ety=w2t(en.y);
-  let placed=false;
-  outer:
-  for(let [ox,oy] of [[1,0],[-1,0],[0,1],[0,-1]]){
-   let tx=etx+ox,ty=ety+oy;
-   if(tx<1||ty<1||tx>=GW-1||ty>=GH-1)continue;
-   if(tiles[ty][tx]===0&&Math.hypot(b.x-t2w(tx),b.y-t2w(ty))<160){b.selected=1;placeAt(b,t2w(tx),t2w(ty));placed=true;break outer;}
-  }
-  if(!placed){
-   for(let c of crystals){
-    if(Math.hypot(t2w(c.tx)-en.x,t2w(c.ty)-en.y)<60){
-     if(Math.hypot(b.x-t2w(c.tx),b.y-t2w(c.ty))<100){attackAt(b,t2w(c.tx),t2w(c.ty));}
-     else{b.mx=(t2w(c.tx)-b.x)/100;b.my=(t2w(c.ty)-b.y)/100;}
-     break;
-    }
-   }
-   // place crystal on obby near enemy
-   for(let [ox,oy] of [[1,0],[-1,0],[0,1],[0,-1]]){
-    let tx=etx+ox,ty=ety+oy;
-    if(tiles[ty]?.[tx]===1&&!crystals.find(cc=>cc.tx===tx&&cc.ty===ty)){b.selected=2;placeAt(b,t2w(tx),t2w(ty));break;}
-   }
-  }
-  // melee
-  if(dist<65)attackAt(b,en.x,en.y);
-  // anchor surprise (medium/hard)
-  if((b.botLevel!=='easy')&&dist<120&&Math.random()<0.08){
-   let tx=w2t(b.x+dx*0.3),ty=w2t(b.y+dy*0.3);
-   if(tiles[ty]?.[tx]===0){b.selected=3;placeAt(b,t2w(tx),t2w(ty));}
-   else if(tiles[ty]?.[tx]===3&&charge[ty][tx]<3){b.selected=4;placeAt(b,t2w(tx),t2w(ty));}
-   else if(tiles[ty]?.[tx]===3&&charge[ty][tx]>0){attackAt(b,t2w(tx),t2w(ty));}
-  }
- }
- let sp=200*speedMul;
- let nx2=b.x+b.mx*sp*dt, ny2=b.y+b.my*sp*dt;
- if(!colliding(nx2,b.y))b.x=nx2;
- if(!colliding(b.x,ny2))b.y=ny2;
- b.face=Math.atan2(dy,dx);
-}
-
-// ===== LOOP =====
-let last=performance.now();
-function loop(now){
- requestAnimationFrame(loop);
- let dt=Math.min(0.033,(now-last)/1000);last=now;
- if(!playing||players.length===0){render();return;}
- // timers
- for(let p of players){p.atkCD-=dt;p.plcCD-=dt;p.eatCD-=dt;p.god-=dt;
-  if(!p.alive){p.resp-=dt;if(p.resp<=0){p.alive=true;p.hp=100;p.x=200+Math.random()*560;p.y=200+Math.random()*200;p.totems=Math.max(p.totems,1);}}}
- // input & movement
- if(mode==='bot'){
-  let me=players[0];
-  if(me.alive){let ix=(keys['d']?1:0)-(keys['a']?1:0),iy=(keys['s']?1:0)-(keys['w']?1:0);
-   let sp=(keys['shift']?250:185)*dt;let l=Math.hypot(ix,iy)||1;if(ix||iy){ix/=l;iy/=l;}
-   if(!colliding(me.x+ix*sp,me.y))me.x+=ix*sp;
-   if(!colliding(me.x,me.y+iy*sp))me.y+=iy*sp;}
-  for(let i=1;i<players.length;i++)if(players[i].isBot&&players[i].alive)updateBot(players[i],dt);
- }else if(mode==='local'){
-  let p1=players[0],p2=players[1];
-  if(p1.alive){let ix=(keys['d']?1:0)-(keys['a']?1:0),iy=(keys['s']?1:0)-(keys['w']?1:0);
-   moveP(p1,ix,iy,dt);
-   if(keys['f']){autoAttack(p1);keys['f']=false;} if(keys['g'])autoPlace(p1);
-   if(keys['r']){eat(p1);keys['r']=false;} if(keys['q']){p1.selected=p1.selected%6+1;keys['q']=false;}}
-  if(p2.alive){let ix=(keys['arrowright']?1:0)-(keys['arrowleft']?1:0),iy=(keys['arrowdown']?1:0)-(keys['arrowup']?1:0);
-   moveP(p2,ix,iy,dt);
-   if(keys['k']){autoAttack(p2);keys['k']=false;} if(keys['l'])autoPlace(p2);
-   if(keys['o']){eat(p2);keys['o']=false;} if(keys['p']){p2.selected=p2.selected%6+1;keys['p']=false;}}
- }else if(mode==='online'){
-  if(isHost){
-   let me=players[0],guest=players[1];
-   if(me.alive){let ix=(keys['d']?1:0)-(keys['a']?1:0),iy=(keys['s']?1:0)-(keys['w']?1:0);moveP(me,ix,iy,dt);
-    if(mouse.left){attackAt(me,mouse.x,mouse.y);mouse.left=false;}
-    // right handled via event
-   }
-   if(guest.alive){moveP(guest,netGuestInput.ix||0,netGuestInput.iy||0,dt);
-    guest.selected=netGuestInput.sel||1;
-    if(netGuestInput.atk)attackAt(guest,netGuestInput.atk.x,netGuestInput.atk.y);
-    if(netGuestInput.plc)placeAt(guest,netGuestInput.plc.x,netGuestInput.plc.y);
-    if(netGuestInput.eat)eat(guest);
-    netGuestInput.atk=null;netGuestInput.plc=null;netGuestInput.eat=false;
-   }
-   if(conn&&conn.open&&now-lastSnap>100){lastSnap=now;
-    conn.send({type:'snap',tiles,charge,crystals,ps:players.map(p=>({x:p.x,y:p.y,hp:p.hp,alive:p.alive,totems:p.totems,gapples:p.gapples,selected:p.selected,kills:p.kills,armor:p.armor}))});}
-  }else{
-   // guest: send input, render snap
-   if(now-lastSend>50&&conn&&conn.open){lastSend=now;
-    let ix=(keys['d']?1:0)-(keys['a']?1:0),iy=(keys['s']?1:0)-(keys['w']?1:0);
-    conn.send({type:'input',ix,iy,sel:players[1].selected,atk:mouse.left?{x:mouse.x,y:mouse.y}:null,plc:null,eat:keys['e']?true:false});
-    if(keys['e'])keys['e']=false;mouse.left=false;
-   }
-  }
- }
- // particles/texts
- for(let pt of particles){pt.t+=dt;if(pt.vx!==undefined){pt.x+=pt.vx*dt;pt.y+=pt.vy*dt;}}
- particles=particles.filter(p=>p.t<(p.life||0.4));
- for(let t of texts){t.t+=dt;t.y-=30*dt;}
- texts=texts.filter(t=>t.t<1.2);
- render();
-}
-function moveP(p,ix,iy,dt){
- let l=Math.hypot(ix,iy);if(l>1){ix/=l;iy/=l;}
- let sp=190*dt;
- if(!colliding(p.x+ix*sp,p.y))p.x+=ix*sp;
- if(!colliding(p.x,p.y+iy*sp))p.y+=iy*sp;
-}
-// mouse hold for guest/host placing? track
-setInterval(()=>{if(playing&&mode==='online'&&!isHost&&conn&&conn.open){
- // right click place queue via event? we send plc on mousedown instead
-}},100);
-cv.addEventListener('mousedown',e=>{
- if(mode==='online'&&!isHost&&playing){
-  if(e.button===0)mouse.left=true;
-  if(e.button===2&&conn&&conn.open)conn.send({type:'input',ix:0,iy:0,sel:players[1].selected,atk:null,plc:{x:mouse.x,y:mouse.y},eat:false});
- }
- if(mode==='bot'&&e.button===0)mouse.left=true;
-});
-// allow hold attack
-setInterval(()=>{if(playing&&mode==='bot'){let p=players[0];if(!p)return;
- // left held?
-}},50);
-
-// ===== RENDER =====
-function render(){
- ctx.fillStyle='#0d1117';ctx.fillRect(0,0,W,H);
- // floor checker
- for(let y=0;y<GH;y++)for(let x=0;x<GW;x++){if((x+y)%2===0){ctx.fillStyle='#161b22';ctx.fillRect(x*TILE,y*TILE,TILE,TILE);}}
- // tiles
- for(let y=0;y<GH;y++)for(let x=0;x<GW;x++){
-  let t=tiles[y][x];if(!t)continue;let px=x*TILE,py=y*TILE;
-  if(t===2){ctx.fillStyle='#333';ctx.fillRect(px,py,TILE,TILE);ctx.fillStyle='#555';ctx.fillRect(px+4,py+4,6,6);ctx.fillRect(px+18,py+18,6,6);}
-  else if(t===1){ctx.fillStyle='#1a0f2e';ctx.fillRect(px,py,TILE,TILE);ctx.fillStyle='#6d28d9';ctx.fillRect(px+5,py+5,8,8);ctx.fillRect(px+17,py+15,7,7);}
-  else if(t===3){ctx.fillStyle='#444';ctx.fillRect(px,py,TILE,TILE);ctx.fillStyle=charge[y][x]>0?'#ffcc00':'#222';ctx.fillRect(px+6,py+6,TILE-12,TILE-12);
-   ctx.fillStyle='#000';ctx.font='12px Arial';ctx.fillText(charge[y][x]+'',px+11,py+20);}
- }
- // crystals
- for(let c of crystals){let x=t2w(c.tx),y=t2w(c.ty);
-  ctx.shadowColor='#0ff';ctx.shadowBlur=15;ctx.fillStyle='#22d3ee';
-  ctx.save();ctx.translate(x,y);ctx.rotate(Math.PI/4);ctx.fillRect(-8,-8,16,16);ctx.restore();ctx.shadowBlur=0;
-  ctx.fillStyle='#fff';ctx.fillRect(x-2,y-2,4,4);}
- // players
- for(let p of players){
-  if(!p.alive){ctx.fillStyle='#555';ctx.font='12px Arial';ctx.fillText(p.name+' respawn '+Math.ceil(p.resp),p.x-30,p.y);continue;}
-  if(p.god>0&&Math.floor(p.god*10)%2===0)ctx.globalAlpha=0.5;
-  ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x,p.y,13,0,7);ctx.fill();
-  ctx.fillStyle='#000';ctx.fillRect(p.x-8,p.y-8,16,6); // visor
-  // armour trim
-  ctx.strokeStyle=p.armor==='netherite'?'#444':p.armor==='diamond'?'#0ff':'#aaa';ctx.lineWidth=3;ctx.beginPath();ctx.arc(p.x,p.y,13,0,7);ctx.stroke();
-  ctx.globalAlpha=1;
-  ctx.fillStyle='#fff';ctx.font='12px Arial';ctx.fillText(p.name+' ('+p.kills+')',p.x-25,p.y-22);
-  // hp bar
-  ctx.fillStyle='#333';ctx.fillRect(p.x-20,p.y+16,40,6);
-  ctx.fillStyle=p.hp>50?'#0f0':p.hp>25?'#ff0':'#f00';ctx.fillRect(p.x-20,p.y+16,40*p.hp/100,6);
-  ctx.fillStyle='#ff0';ctx.font='11px Arial';ctx.fillText('✦'+p.totems+' 🍎'+p.gapples,p.x-20,p.y+32);
- }
- // particles
- for(let pt of particles){
-  if(pt.max){let pr=pt.r+(pt.max-pt.r)*(pt.t/0.4);ctx.strokeStyle='rgba(255,150,0,'+(1-pt.t/0.4)+')';ctx.lineWidth=4;ctx.beginPath();ctx.arc(pt.x,pt.y,pr,0,7);ctx.stroke();}
-  else{ctx.globalAlpha=1-pt.t/pt.life;ctx.fillStyle=pt.c;ctx.fillRect(pt.x,pt.y,pt.r,pt.r);ctx.globalAlpha=1;}
- }
- for(let t of texts){ctx.globalAlpha=1-t.t;ctx.fillStyle=t.c;ctx.font='bold 14px Arial';ctx.fillText(t.txt,t.x-15,t.y);ctx.globalAlpha=1;}
- // hotbar (for P1)
- if(playing&&(mode==='bot'||(mode==='online'))){
-  let me=players[myIndex];if(!me)return;
-  let names=['1 Obby','2 Cry','3 Anch','4 Glow','5 Sword','6 Pick'];
-  for(let i=0;i<6;i++){let x=10+i*90,y=H-38;
-   ctx.fillStyle=me.selected===i+1?'#334':'#222';ctx.fillRect(x,y,84,32);
-   ctx.strokeStyle='#555';ctx.strokeRect(x,y,84,32);
-   ctx.fillStyle='#fff';ctx.font='12px Arial';ctx.fillText(names[i],x+6,y+20);}
-  ctx.fillStyle='#fff';ctx.font='14px Arial';
-  ctx.fillText('HP:'+Math.ceil(me.hp)+'  E:Gapple('+me.gapples+')',720,H-15);
- }
-}
-initMap();
-requestAnimationFrame(loop);
-</script>
-</body>
-</html>
+		ga('create', 'UA-78361109-1', 'auto');
+		ga('send', 'pageview');
+	</script>
+</body> 
+</html> 
